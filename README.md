@@ -2,6 +2,8 @@
 
 A single-page teaching tool that turns binary into a blinking lamp. Type any string of 0s and 1s and watch it sent as light, using one of three encodings:
 
+<img width="573" height="772" alt="image" src="https://github.com/user-attachments/assets/0c114983-9868-444a-a2d3-049fd1e05b95" />
+
 - **Level**: lamp on = 1, lamp off = 0.
 - **Manchester**: every bit has a change in the middle (IEEE 802.3 and G.E. Thomas conventions).
 - **8B/10B**: each byte becomes a 10-bit code group with balanced on/off time (optionally starting with a K28.5 sync character).
