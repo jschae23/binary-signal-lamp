@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Binary Signal Lamp</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%92%A1%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --bg:#f3efe6; --panel:#e7e1d3; --ink:#231f18; --muted:#6b6354;
+  --lamp-off:#cfc7b3; --lamp-on:#ffb21a; --glow:rgba(255,178,26,.55);
+  --line:#c9c1ac; --accent:#231f18; --accent-ink:#f3efe6;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#14161a; --panel:#1d2026; --ink:#ece7da; --muted:#9a9484;
+    --lamp-off:#2a2d34; --lamp-on:#ffc233; --glow:rgba(255,194,51,.5);
+    --line:#353944; --accent:#ece7da; --accent-ink:#14161a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#14161a; --panel:#1d2026; --ink:#ece7da; --muted:#9a9484;
+  --lamp-off:#2a2d34; --lamp-on:#ffc233; --glow:rgba(255,194,51,.5);
+  --line:#353944; --accent:#ece7da; --accent-ink:#14161a;
+}
+html { color-scheme:light dark; scroll-padding-top:env(safe-area-inset-top,0px); }
+* { box-sizing:border-box; }
+body { margin:0; min-height:100vh; background:var(--bg); color:var(--ink); font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; display:flex; justify-content:center; padding:28px 18px 40px; }
+main { width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; gap:18px; }
+h1 { font-size:1.35rem; font-weight:600; margin:0; }
+p.sub { margin:4px 0 0; color:var(--muted); font-size:.92rem; text-align:center; }
+.lamp-wrap { padding:22px 0 6px; }
+#lamp { width:170px; height:170px; border-radius:50%; background:var(--lamp-off); border:6px solid var(--line); transition:background .05s, box-shadow .05s; }
+#lamp.on { background:var(--lamp-on); box-shadow:0 0 70px 26px var(--glow), inset 0 0 30px rgba(255,255,255,.45); border-color:var(--lamp-on); }
+#state { font-size:.95rem; color:var(--muted); min-height:1.3em; text-align:center; }
+#wave { width:100%; overflow-x:auto; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+#wave svg { display:block; }
+#groups { display:flex; flex-wrap:wrap; justify-content:center; gap:10px 14px; width:100%; }
+.grp { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.glabel { font-size:.72rem; color:var(--muted); font-family:ui-monospace,Menlo,Consolas,monospace; }
+.chips { display:flex; gap:3px; }
+.bit { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.95rem; width:1.55rem; height:2rem; display:flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:5px; color:var(--muted); background:var(--panel); }
+.bit.cur { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
+.bit.done { color:var(--ink); }
+.controls { width:100%; display:flex; flex-direction:column; gap:14px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+label { font-size:.9rem; color:var(--muted); display:flex; flex-direction:column; gap:6px; }
+input[type=text], select { font:inherit; padding:9px 11px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); width:100%; }
+input[type=text] { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:1.1rem; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline:3px solid var(--lamp-on); outline-offset:2px; }
+#err { color:#c0392b; font-size:.85rem; min-height:1.1em; }
+#note { color:var(--muted); font-size:.85rem; }
+.row { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.row label.inl { flex-direction:row; align-items:center; gap:8px; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+input[type=range] { flex:1; min-width:120px; accent-color:var(--lamp-on); }
+button { font:inherit; font-weight:600; padding:10px 20px; border-radius:8px; cursor:pointer; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); }
+button.alt { background:transparent; color:var(--ink); border-color:var(--line); font-weight:500; padding:8px 12px; }
+.presets { display:flex; gap:8px; flex-wrap:wrap; }
+.cap { font-size:.8rem; color:var(--muted); margin-top:-8px; text-align:center; }
+#steps { width:100%; }
+.tbl { width:100%; overflow-x:auto; }
+table { border-collapse:collapse; width:100%; font-size:.82rem; font-family:ui-monospace,Menlo,Consolas,monospace; }
+caption { font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:.85rem; color:var(--muted); text-align:left; padding-bottom:6px; }
+th, td { border-bottom:1px solid var(--line); padding:5px 8px; text-align:left; white-space:nowrap; }
+th { color:var(--muted); font-weight:500; }
+details { width:100%; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 16px; font-size:.92rem; line-height:1.5; }
+summary { cursor:pointer; font-weight:600; }
+details p { margin:.7em 0 0; }
+@media (prefers-reduced-motion: reduce) { #lamp { transition:none; } }
+</style>
+</head>
+<body>
+<main>
+  <div style="text-align:center">
+    <h1>Binary signal lamp</h1>
+    <p class="sub">A high level lights the lamp. A low level turns it off.</p>
+  </div>
+  <div class="lamp-wrap"><div id="lamp" role="img" aria-label="Signal lamp"></div></div>
+  <div id="state" aria-live="polite">Ready</div>
+  <div id="wave" aria-label="Signal waveform"></div>
+  <div class="cap">Waveform: top = lamp on, bottom = lamp off. Grey lines mark where each bit starts.</div>
+  <div id="groups" aria-label="Bits being sent"></div>
+  <div id="steps"></div>
+
+  <div class="controls">
+    <label>Binary input (only 0 and 1; spaces are ignored)
+      <input id="input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="01110011">
+    </label>
+    <div id="err"></div>
+    <div class="two">
+      <label>Byte coding
+        <select id="bytecode">
+          <option value="none">None (send bits as typed)</option>
+          <option value="8b10b">8B/10B</option>
+        </select>
+      </label>
+      <label>Line coding
+        <select id="linecode">
+          <option value="nrz">Level (1 = on, 0 = off)</option>
+          <option value="ieee">Manchester (IEEE 802.3)</option>
+          <option value="thomas">Manchester (G.E. Thomas)</option>
+        </select>
+      </label>
+    </div>
+    <label class="inl" id="kwrap"><input id="kchk" type="checkbox"> Start with a K28.5 sync character</label>
+    <div id="note"></div>
+    <label>Bit time
+      <span style="display:flex;gap:10px;align-items:center">
+        <input id="speed" type="range" min="100" max="1500" step="50" value="600">
+        <span id="speedVal" style="min-width:4.5em;text-align:right">600 ms</span>
+      </span>
+    </label>
+    <div class="row">
+      <label class="inl"><input id="loop" type="checkbox" checked> Repeat</label>
+      <div style="display:flex;gap:8px"><button id="play">Play</button><button id="stop" class="alt">Stop</button></div>
+    </div>
+    <div class="presets">
+      <button class="alt" data-v="01110011">01110011</button>
+      <button class="alt" data-v="10101010">10101010</button>
+      <button class="alt" data-v="01001000 01101001">“Hi” (ASCII)</button>
+    </div>
+  </div>
+<details>
+    <summary>How does this work?</summary>
+    <p><b>Why encode at all?</b> A receiver watching a lamp has no ruler. If the lamp stays off for a while, it can’t tell how many 0s went by. An encoding adds structure so the receiver can keep time and stay in step with the sender.</p>
+    <p><b>Level.</b> The simplest scheme: on means 1, off means 0. A long run of 1s or 0s has no changes, so counting the bits is guesswork.</p>
+    <p><b>Manchester.</b> Each bit is split into two halves, and the lamp changes in the middle of every bit. That guaranteed change works like a built-in metronome (called self-clocking). The price is speed: the lamp has to change twice as often for the same data.</p>
+    <p><b>8B/10B.</b> Each 8-bit byte is swapped for a 10-bit code from a lookup table. The codes are chosen so there are never more than five identical bits in a row, and so that over time the lamp is on about as long as it is off (called DC balance). Both properties help the receiver keep time.</p>
+    <p><b>Reading the names.</b> Write a byte as HGF EDCBA: the first 3 bits are HGF and the last 5 are EDCBA. The name D<i>x</i>.<i>y</i> means x = the value of the 5 bits and y = the value of the 3 bits. Example: 01001000 is 010 and 01000, so x = 8, y = 2, and the name is D8.2. D means data. K codes are special control characters; K28.5 is a sync marker that never appears as data.</p>
+    <p><b>Running disparity (RD).</b> RD is a tally: − means the stream so far has had one extra 0, and + means one extra 1. Many bytes have two possible codes, one with extra 1s and one with extra 0s. The encoder picks the one that moves RD back toward zero, which is why the same byte can look different in different places.</p>
+  </details>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var lamp = $('lamp'), input = $('input'), stateEl = $('state'), errEl = $('err'), noteEl = $('note');
+  var speed = $('speed'), loop = $('loop'), byteSel = $('bytecode'), lineSel = $('linecode'), kChk = $('kchk');
+  var groupsEl = $('groups'), waveEl = $('wave'), stepsEl = $('steps');
+  var timer = null, idx = 0, plan = null, chips = [], lastBit = -1;
+
+  // 8B/10B tables: [RD-, RD+] (one entry = same for both). Bits are abcdei and fghj, sent a first.
+  var T6 = [['100111','011000'],['011101','100010'],['101101','010010'],['110001'],['110101','001010'],['101001'],['011001'],['111000','000111'],
+    ['111001','000110'],['100101'],['010101'],['110100'],['001101'],['101100'],['011100'],['010111','101000'],
+    ['011011','100100'],['100011'],['010011'],['110010'],['001011'],['101010'],['011010'],['111010','000101'],
+    ['110011','001100'],['100110'],['010110'],['110110','001001'],['001110'],['101110','010001'],['011110','100001'],['101011','010100']];
+  var T4 = [['1011','0100'],['1001'],['0101'],['1100','0011'],['1101','0010'],['1010'],['0110'],['1110','0001']];
+  var A7 = ['0111','1000'];
+
+  function pick(e, rd) { return rd < 0 ? e[0] : (e[1] || e[0]); }
+  function nextRD(s, rd) {
+    var n = s.split('1').length - 1, half = s.length / 2;
+    return n > half ? 1 : n < half ? -1 : rd;
+  }
+
+  function parse() {
+    var raw = input.value.replace(/[\s_-]/g, '');
+    if (!raw.length) { errEl.textContent = 'Enter at least one 0 or 1.'; return null; }
+    if (/[^01]/.test(raw)) { errEl.textContent = 'Only 0 and 1 are allowed (spaces are ignored).'; return null; }
+    errEl.textContent = '';
+    return raw;
+  }
+
+  function build(startRD) {
+    var raw = parse(); if (!raw) return null;
+    var groups = [], steps = [], note = '', endRD = startRD || -1;
+    if (byteSel.value === '8b10b') {
+      var rd = startRD || -1, n = Math.ceil(raw.length / 8);
+      if (kChk.checked) {
+        var kb = rd < 0 ? '0011111010' : '1100000101';
+        groups.push({ label: 'K28.5', bits: kb });
+        steps.push({ byte: 'sync', name: 'K28.5', s: rd, c6: kb.slice(0, 6), c4: kb.slice(6), e: -rd });
+        rd = -rd;
+      }
+      for (var i = 0; i < n; i++) {
+        var chunk = raw.slice(i * 8, i * 8 + 8);
+        while (chunk.length < 8) chunk += '0';
+        var v = parseInt(chunk, 2), x = v & 31, y = v >> 5, start = rd;
+        var s6 = pick(T6[x], rd); rd = nextRD(s6, rd);
+        var useA7 = y === 7 && ((rd < 0 && (x === 17 || x === 18 || x === 20)) || (rd > 0 && (x === 11 || x === 13 || x === 14)));
+        var s4 = pick(useA7 ? A7 : T4[y], rd); rd = nextRD(s4, rd);
+        groups.push({ label: 'D' + x + '.' + y + (start < 0 ? ' RD−' : ' RD+'), bits: s6 + s4 });
+        steps.push({ byte: chunk, name: 'D' + x + '.' + y, s: start, c6: s6, c4: s4, e: rd });
+      }
+      note = raw.length % 8 ? 'Input is not a multiple of 8 bits, so the last byte is padded with zeros. ' : '';
+      endRD = rd;
+      note += 'Each byte (read as a normal binary number) becomes a 10-bit code group, sent left to right. RD (running disparity) tracks whether the lamp has been on slightly more (+) or less (−) than off, and the encoder steers it back toward balance. With Repeat on, each round starts from the RD the last round ended on, like a real continuous link.';
+    } else {
+      groups.push({ label: '', bits: raw });
+      note = '';
+    }
+    if (lineSel.value !== 'nrz') note += (note ? ' ' : '') + 'Manchester: each bit is two halves, and the lamp always changes in the middle. ' + (lineSel.value === 'ieee' ? 'A 1 is off then on; a 0 is on then off.' : 'A 0 is off then on; a 1 is on then off.');
+    var bits = groups.map(function (g) { return g.bits; }).join('');
+    var slots = [], man = lineSel.value !== 'nrz';
+    for (var b = 0; b < bits.length; b++) {
+      var one = bits[b] === '1';
+      if (!man) slots.push({ l: one ? 1 : 0, b: b });
+      else {
+        var up = lineSel.value === 'ieee' ? one : !one;   // true = low-to-high
+        slots.push({ l: up ? 0 : 1, b: b, h: 0 }, { l: up ? 1 : 0, b: b, h: 1 });
+      }
+    }
+    return { groups: groups, steps: steps, endRD: endRD, bits: bits, slots: slots, man: man, note: note };
+  }
+
+  var SW = 14, H = 38, HI = 7, LO = 31;
+  function drawWave() {
+    var s = plan.slots, d = '', prev = null;
+    for (var i = 0; i < s.length; i++) {
+      var y = s[i].l ? HI : LO, x = i * SW;
+      d += (i === 0 ? 'M0,' + y : (s[i].l !== prev ? ' V' + y : '')) + ' H' + (x + SW);
+      prev = s[i].l;
+    }
+    var w = Math.max(s.length * SW, 10), per = plan.man ? 2 : 1, ticks = '';
+    for (var t = 0; t <= s.length; t += per) ticks += '<line x1="' + t * SW + '" x2="' + t * SW + '" y1="0" y2="' + H + '" stroke="var(--line)" stroke-width="1"/>';
+    waveEl.innerHTML = '<svg width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + ' ' + H + '">' + ticks +
+      '<rect id="cur" x="0" y="0" width="' + SW + '" height="' + H + '" fill="var(--glow)" opacity="0"/>' +
+      '<path d="' + d + '" fill="none" stroke="var(--ink)" stroke-width="2"/></svg>';
+  }
+
+  function drawChips() {
+    groupsEl.innerHTML = ''; chips = []; var k = 0;
+    plan.groups.forEach(function (g) {
+      var wrap = document.createElement('div'); wrap.className = 'grp';
+      if (g.label) { var l = document.createElement('span'); l.className = 'glabel'; l.textContent = g.label; wrap.appendChild(l); }
+      var row = document.createElement('div'); row.className = 'chips';
+      g.bits.split('').forEach(function (b) {
+        var c = document.createElement('span'); c.className = 'bit'; c.textContent = b; row.appendChild(c); chips[k++] = c;
+      });
+      wrap.appendChild(row); groupsEl.appendChild(wrap);
+    });
+  }
+
+  function drawSteps() {
+    if (!plan.steps.length) { stepsEl.innerHTML = ''; return; }
+    var r = function (x) { return x < 0 ? '−' : '+'; };
+    var h = '<div class="tbl"><table><caption>How each byte was encoded</caption><thead><tr><th>Byte</th><th>Name</th><th>RD before</th><th>5 bits → 6</th><th>3 bits → 4</th><th>RD after</th></tr></thead><tbody>';
+    plan.steps.forEach(function (s) {
+      var d = s.byte.length === 8;
+      h += '<tr><td>' + s.byte + '</td><td>' + s.name + '</td><td>' + r(s.s) + '</td><td>' + (d ? s.byte.slice(3) + ' → ' : '') + s.c6 + '</td><td>' + (d ? s.byte.slice(0, 3) + ' → ' : '') + s.c4 + '</td><td>' + r(s.e) + '</td></tr>';
+    });
+    stepsEl.innerHTML = h + '</tbody></table></div>';
+  }
+
+  function mark(cur) {
+    for (var i = 0; i < chips.length; i++) chips[i].className = 'bit' + (i === cur ? ' cur' : (cur >= 0 && i < cur ? ' done' : ''));
+    lastBit = cur;
+  }
+
+  function refresh() {
+    plan = build();
+    if (!plan) { waveEl.innerHTML = ''; groupsEl.innerHTML = ''; stepsEl.innerHTML = ''; noteEl.textContent = ''; return false; }
+    noteEl.textContent = plan.note; drawWave(); drawChips(); drawSteps(); mark(-1);
+    kChk.disabled = byteSel.value !== '8b10b'; $('kwrap').style.opacity = kChk.disabled ? .5 : 1;
+    return true;
+  }
+
+  function setLamp(on) { lamp.classList.toggle('on', on); }
+  function slotMs() { return plan.man ? +speed.value / 2 : +speed.value; }
+
+  function stop(msg) {
+    clearTimeout(timer); timer = null; setLamp(false);
+    stateEl.textContent = msg || 'Stopped'; if (plan) mark(-1);
+    var c = $('cur'); if (c) c.setAttribute('opacity', 0);
+  }
+
+  function step() {
+    if (idx >= plan.slots.length) {
+      if (!loop.checked) { stop('Finished'); return; }
+      idx = 0;
+      if (byteSel.value === '8b10b') { plan = build(plan.endRD); drawWave(); drawChips(); drawSteps(); lastBit = -1; }
+    }
+    var s = plan.slots[idx];
+    setLamp(!!s.l);
+    if (s.b !== lastBit) mark(s.b);
+    var c = $('cur'); c.setAttribute('x', idx * SW); c.setAttribute('opacity', 1);
+    waveEl.scrollLeft = Math.max(0, idx * SW - waveEl.clientWidth / 2);
+    stateEl.textContent = 'Bit ' + (s.b + 1) + ' of ' + plan.bits.length + ' (' + plan.bits[s.b] + ')' + (plan.man ? ', half ' + (s.h + 1) + ' of 2' : '') + ': light ' + (s.l ? 'on' : 'off');
+    idx++;
+    timer = setTimeout(step, slotMs());
+  }
+
+  function play() {
+    clearTimeout(timer);
+    if (!refresh()) { stop('Fix the input to play'); return; }
+    idx = 0; step();
+  }
+
+  $('play').addEventListener('click', play);
+  $('stop').addEventListener('click', function () { stop('Stopped'); });
+  [input, byteSel, lineSel, kChk].forEach(function (el) {
+    el.addEventListener(el === input ? 'input' : 'change', function () { if (timer) stop('Stopped'); refresh(); });
+  });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') play(); });
+  speed.addEventListener('input', function () { speedVal.textContent = speed.value + ' ms'; });
+  var speedVal = $('speedVal');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-v]'), function (b) {
+    b.addEventListener('click', function () { input.value = b.getAttribute('data-v'); play(); });
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>
